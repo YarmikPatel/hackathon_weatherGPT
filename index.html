@@ -3,31 +3,38 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SIH26068 - Climate Analytics & Multi-Agent AI Platform</title>
+  <title>SIH26068 - WeatherGPT Climate Analytics</title>
   
-  <!-- CSS Stylesheets -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link rel="stylesheet" href="style.css" />
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDRy6H6P9MQCHkz0UJlJswT2QsFARebmzA&v=weekly"></script>
 
-  <!-- Core Libraries -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body class="dark-theme">
 
-  <!-- Header & Navigation Bar -->
+  <!-- App Header -->
   <header class="app-header">
     <div class="brand">
-      <i class="fa-solid me-2 fa-cloud-bolt text-cyan"></i>
-      <h1>SIH26068 <span>ClimateIQ</span></h1>
-      <span class="badge badge-cap">NDMA CAP v1.2 Compliant</span>
+      <i class="fa-solid fa-cloud-bolt text-cyan"></i>
+      <h1>SIH26068 <span>WeatherGPT</span></h1>
+      <span class="badge badge-cap">NDMA CAP v1.2</span>
     </div>
+
+    <!-- Navigation View Tabs -->
+    <nav class="nav-tabs">
+      <button class="nav-btn active" data-view="dashboard-view"><i class="fa-solid fa-chart-pie"></i> Dashboard</button>
+      <button class="nav-btn" data-view="forecast-view"><i class="fa-solid fa-calendar-days"></i> 7-Day Forecast</button>
+      <button class="nav-btn" data-view="map-view-tab"><i class="fa-solid fa-map"></i> GIS Map</button>
+    </nav>
 
     <div class="header-controls">
       <div id="connection-status" class="status-indicator online">
-        <span class="dot"></span> <span id="status-text">Live Sync</span>
+        <span class="dot"></span> <span id="status-text">FastAPI Sync</span>
       </div>
 
       <div class="location-picker">
@@ -37,13 +44,11 @@
           <option value="28.6139,77.2090">New Delhi, DL</option>
           <option value="19.0760,72.8777">Mumbai, MH</option>
           <option value="13.0827,80.2707">Chennai, TN</option>
-          <option value="22.5726,88.3639">Kolkata, WB</option>
-          <option value="20.2961,85.8245">Bhubaneswar, OD</option>
         </select>
       </div>
 
       <button id="export-pdf-btn" class="btn btn-outline-cyan">
-        <i class="fa-solid fa-file-pdf"></i> Export Advisory PDF
+        <i class="fa-solid fa-file-pdf"></i> Export PDF
       </button>
     </div>
   </header>
@@ -55,154 +60,134 @@
     <button id="dismiss-alert-btn" class="ticker-close">&times;</button>
   </section>
 
-  <!-- Main Content Layout -->
-  <main class="main-dashboard" id="printable-dashboard">
+  <!-- Main Multi-View Layout Container -->
+  <main class="main-dashboard">
     
-    <!-- Sidebar: AI Specialized Multi-Agent Assistant -->
+    <!-- Sidebar: WeatherGPT Assistant (Persistent Across Views) -->
     <aside class="sidebar-ai glass-card">
       <div class="ai-header">
         <div class="ai-title">
           <i class="fa-solid fa-brain text-purple"></i>
-          <h3>Specialized AI Assistant</h3>
+          <h3>WeatherGPT</h3>
         </div>
         
-        <!-- Sector Persona Selector -->
         <div class="sector-selector">
-          <label for="sector-agent-select">Active Agent Persona:</label>
+          <label for="sector-agent-select">Active Persona:</label>
           <select id="sector-agent-select">
             <option value="agriculture">🌾 Agri-Met Advisor</option>
             <option value="aviation">✈️ Aero-Marine Specialist</option>
             <option value="disaster">🚨 Disaster Co-Pilot</option>
-            <option value="research">🔬 Climate Researcher</option>
           </select>
         </div>
       </div>
 
-      <!-- AI Dialogue Box -->
       <div id="chat-messages" class="chat-messages-container">
         <div class="chat-message system">
           <div class="avatar"><i class="fa-solid fa-robot"></i></div>
           <div class="message-body">
-            Welcome to <strong>SIH26068 Climate Analytics Engine</strong>. Select a sector persona or ask a question directly using voice or text.
+            WeatherGPT online. Connected to FastAPI Engine & Open-Meteo feeds.
           </div>
         </div>
       </div>
 
-      <!-- Quick Action Chips -->
       <div class="quick-prompts">
-        <button class="chip" data-query="30-year monsoon trend anomaly for onion crop in Nagpur">🌾 Monsoon Anomaly</button>
-        <button class="chip" data-query="Check turbulence, wind shear, and cloud ceiling at New Delhi airport">✈️ Aviation Check</button>
-        <button class="chip" data-query="Current NDMA CAP v1.2 flood alerts and evacuation risk">🚨 CAP Flood Risk</button>
+        <button class="chip" data-query="Check monsoon sowing risk for onion crop">🌾 Sowing Risk</button>
+        <button class="chip" data-query="Flood alert and evacuation assessment">🚨 Flood Assessment</button>
       </div>
 
-      <!-- Speech Input / Text Query Bar -->
       <div class="chat-input-bar">
-        <button id="mic-btn" class="btn-icon" title="Toggle Voice Input (Speech-to-Text)">
-          <i class="fa-solid fa-microphone"></i>
-        </button>
+        <button id="mic-btn" class="btn-icon" title="Voice Input"><i class="fa-solid fa-microphone"></i></button>
         <select id="language-select" class="lang-dropdown">
           <option value="en-US">English</option>
-          <option value="hi-IN">हिन्दी (Hindi)</option>
-          <option value="mr-IN">मराठी (Marathi)</option>
-          <option value="ta-IN">தமிழ் (Tamil)</option>
-          <option value="bn-IN">বাংলা (Bengali)</option>
+          <option value="hi-IN">हिन्दी</option>
         </select>
-        <input type="text" id="user-query-input" placeholder="Type or ask your weather query..." />
-        <button id="send-query-btn" class="btn-primary">
-          <i class="fa-solid fa-paper-plane"></i>
-        </button>
+        <input type="text" id="user-query-input" placeholder="Ask WeatherGPT..." />
+        <button id="send-query-btn" class="btn-primary"><i class="fa-solid fa-paper-plane"></i></button>
       </div>
     </aside>
 
-    <!-- Center & Right: Dashboard Main Visualization -->
-    <section class="dashboard-content">
+    <!-- Main View Switcher Section -->
+    <section class="view-content">
 
-      <!-- Current Weather Overview Cards -->
-      <div class="weather-metrics-grid">
-        <div class="metric-card glass-card">
-          <i class="fa-solid fa-temperature-high text-amber"></i>
-          <div>
-            <span class="label">Current Temperature</span>
-            <div id="metric-temp" class="value">-- °C</div>
-            <span id="metric-temp-anomaly" class="sub-value">Anomaly vs 30yr: --</span>
+      <!-- View 1: Main Dashboard -->
+      <div id="dashboard-view" class="tab-view active">
+        <div class="weather-metrics-grid">
+          <div class="metric-card glass-card">
+            <i class="fa-solid fa-temperature-high text-amber"></i>
+            <div>
+              <span class="label">Temperature</span>
+              <div id="metric-temp" class="value">-- °C</div>
+            </div>
+          </div>
+
+          <div class="metric-card glass-card">
+            <i class="fa-solid fa-cloud-showers-heavy text-cyan"></i>
+            <div>
+              <span class="label">Precipitation</span>
+              <div id="metric-precip" class="value">-- mm</div>
+            </div>
+          </div>
+
+          <div class="metric-card glass-card">
+            <i class="fa-solid fa-wind text-blue"></i>
+            <div>
+              <span class="label">Wind Speed</span>
+              <div id="metric-wind" class="value">-- km/h</div>
+            </div>
+          </div>
+
+          <div class="metric-card glass-card">
+            <i class="fa-solid fa-shield-halved text-rose"></i>
+            <div>
+              <span class="label">Composite Risk Index</span>
+              <div id="metric-risk-score" class="value text-amber">-- / 100</div>
+              <span id="metric-risk-level" class="sub-value">Calculating...</span>
+            </div>
           </div>
         </div>
 
-        <div class="metric-card glass-card">
-          <i class="fa-solid fa-cloud-showers-heavy text-cyan"></i>
-          <div>
-            <span class="label">24h Rain / Moisture</span>
-            <div id="metric-precip" class="value">-- mm</div>
-            <span id="metric-precip-deficit" class="sub-value">Deficit: --%</span>
+        <div class="gis-map-container glass-card margin-top">
+          <div class="map-controls">
+            <h4><i class="fa-solid fa-map-location-dot"></i> Interactive GIS Surface</h4>
           </div>
+          <div id="gis-map" class="map-view"></div>
         </div>
 
-        <div class="metric-card glass-card">
-          <i class="fa-solid fa-wind text-blue"></i>
-          <div>
-            <span class="label">Wind & Pressure</span>
-            <div id="metric-wind" class="value">-- km/h</div>
-            <span id="metric-pressure" class="sub-value">-- hPa</span>
-          </div>
-        </div>
-
-        <div class="metric-card glass-card">
-          <i class="fa-solid fa-shield-cat text-rose"></i>
-          <div>
-            <span class="label">CAP Alert Severity</span>
-            <div id="metric-cap-level" class="value text-success">Normal</div>
-            <span id="metric-cap-urgency" class="sub-value">No Active Warnings</span>
+        <div class="analytics-container glass-card margin-top">
+          <h4><i class="fa-solid fa-chart-line"></i> 30-Year Anomaly Baseline (1995–2025)</h4>
+          <div class="charts-wrapper">
+            <div class="chart-box"><canvas id="tempAnomalyChart"></canvas></div>
+            <div class="chart-box"><canvas id="precipTrendChart"></canvas></div>
           </div>
         </div>
       </div>
 
-      <!-- GIS Interactive Map Section -->
-      <div class="gis-map-container glass-card">
-        <div class="map-controls">
-          <h4><i class="fa-solid fa-map-location-dot"></i> Interactive GIS Map Engine</h4>
-          <div class="map-layer-toggles">
-            <button class="layer-btn active" data-layer="precipitation">Precipitation</button>
-            <button class="layer-btn" data-layer="temp">Temperature</button>
-            <button class="layer-btn" data-layer="wind">Wind Speed</button>
-            <button class="layer-btn" data-layer="cap_alert">CAP Alert Polygons</button>
+      <!-- View 2: 7-Day Forecast Grid View -->
+      <div id="forecast-view" class="tab-view">
+        <div class="glass-card">
+          <h3><i class="fa-solid fa-calendar-week text-cyan"></i> 7-Day Meteorological Outlook</h3>
+          <p class="text-muted">Calculated multi-model ensemble forecast with probability bands.</p>
+          <div id="forecast-grid" class="forecast-grid margin-top">
+            <!-- Dynamically populated -->
           </div>
         </div>
-        <div id="gis-map" class="map-view"></div>
       </div>
 
-      <!-- Analytics Section: Decadal Trends & Anomaly Engine -->
-      <div class="analytics-container glass-card">
-        <div class="analytics-header">
-          <h4><i class="fa-solid fa-chart-line"></i> Historical Climate Trends & Anomaly Engine (1995–2025)</h4>
-          <div class="chart-time-range">
-            <button class="range-btn" data-range="10">10 Years</button>
-            <button class="range-btn active" data-range="30">30 Years</button>
-          </div>
-        </div>
-        <div class="charts-wrapper">
-          <div class="chart-box">
-            <canvas id="tempAnomalyChart"></canvas>
-          </div>
-          <div class="chart-box">
-            <canvas id="precipTrendChart"></canvas>
-          </div>
+      <!-- View 3: Full Screen GIS Map Tab -->
+      <div id="map-view-tab" class="tab-view">
+        <div class="glass-card">
+          <h3><i class="fa-solid fa-earth-asia text-purple"></i> Full-Screen Spatial GIS Inspector</h3>
+          <div id="gis-map-tab" class="map-view full-map margin-top"></div>
         </div>
       </div>
 
     </section>
   </main>
 
-  <!-- Footer -->
-  <footer class="app-footer">
-    <p>SIH26068 Climate & Weather Analytics Platform | Open-Meteo, ECMWF ERA5 & NDMA CAP v1.2 Simulation Engine</p>
-  </footer>
-
-  <!-- App Application Logic Scripts -->
   <script src="mqtt_sim.js"></script>
   <script src="weather_service.js"></script>
   <script src="gis_map.js"></script>
   <script src="analytics.js"></script>
-  <script src="ai_assistant.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
